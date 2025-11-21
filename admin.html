@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>抽獎管理工具</title>
+  <title>抽獎管理工具（有效名單產生器）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -113,7 +113,7 @@
       color: #344255;
     }
 
-    textarea, input[type="number"] {
+    textarea {
       width: 100%;
       padding: 8px 10px;
       border-radius: 8px;
@@ -122,9 +122,6 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 0.85rem;
       background: #ffffff;
-    }
-
-    textarea {
       min-height: 140px;
     }
 
@@ -136,9 +133,6 @@
     @media (min-width: 768px) {
       .row.two {
         grid-template-columns: 1.1fr 1fr;
-      }
-      .row.three {
-        grid-template-columns: 1.1fr 0.9fr;
       }
     }
 
@@ -180,16 +174,6 @@
       margin-top: 4px;
     }
 
-    pre {
-      background: #111827;
-      color: #e5e7eb;
-      padding: 10px;
-      border-radius: 10px;
-      overflow-x: auto;
-      font-size: 0.8rem;
-      margin: 6px 0 0;
-    }
-
     .pill {
       display: inline-flex;
       align-items: center;
@@ -217,7 +201,7 @@
       margin-top: 6px;
     }
 
-    .list ul, .list ol {
+    .list ul {
       margin: 4px 0 0 18px;
       padding: 0;
     }
@@ -232,18 +216,20 @@
   <div class="page">
     <h1>抽獎管理工具</h1>
     <div class="subtitle">
-      這一頁只有自己用：上面做 <strong>訂單清單 → orderIds.json</strong>，下面做 <strong>報名整理 + 抽獎</strong>。
+      上面：<strong>訂單清單 ➜ orderIds.json</strong>，<br>
+      下面：<strong>報名資料 ➜ 有效名單（Tab 分隔，可貼回試算表）</strong>。
     </div>
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="json">
         <span class="icon">🧾</span><span>訂單 JSON 產生器</span>
       </button>
-      <button class="tab-btn" data-tab="lottery">
-        <span class="icon">🎲</span><span>報名整理 & 抽獎</span>
+      <button class="tab-btn" data-tab="clean">
+        <span class="icon">📋</span><span>有效名單整理</span>
       </button>
     </div>
 
+    <!-- Tab 1: 訂單 JSON 產生器 -->
     <section class="tab active" id="tab-json">
       <div class="card">
         <h2>訂單清單 ➜ orderIds.json</h2>
@@ -266,7 +252,7 @@
           </div>
           <div>
             <label>產生結果（orderIds.json 內容）：</label>
-            <pre id="ordersOutput">{}</pre>
+            <textarea id="ordersOutput" readonly>{}</textarea>
             <div class="btn-group">
               <button type="button" class="secondary" id="btn-copy-json">複製 JSON</button>
             </div>
@@ -278,19 +264,25 @@
       </div>
     </section>
 
-    <section class="tab" id="tab-lottery">
+    <!-- Tab 2: 有效名單整理 -->
+    <section class="tab" id="tab-clean">
       <div class="card">
-        <h2>報名資料整理</h2>
+        <h2>報名資料 ➜ 有效名單（Tab 分隔）</h2>
         <p class="desc">
           建議流程：在 Google 試算表的「抽獎報名」頁，先篩選出 <strong>狀態 = 有效</strong>，
-          再複製「訂單編號 + 社群名稱」兩欄貼到下面，系統會自動：
-          <br>➜ 去掉空白列　➜ 以訂單編號去重（只保留第一筆）　➜ 幫你統計重複訂單。
+          再複製「訂單編號 + 社群名稱」兩欄貼到下面。<br>
+          系統會：
+          <br>➜ 去掉空白列
+          <br>➜ <strong>訂單編號重複</strong>：只保留第一筆
+          <br>➜ <strong>社群名稱重複</strong>（非空白）：只保留第一筆
         </p>
-        <label for="entryInput">貼上資料（每行：訂單編號＋社群名，可以用逗號、空白或 Tab 分隔）：</label>
+
+        <label for="entryInput">貼上資料（每行：訂單編號＋社群名，可用逗號、空白或 Tab 分隔）：</label>
         <textarea id="entryInput" placeholder="例如：
 2511090201AFQWYC, @user1
 2511090411V7UZ3S, @user2
-2511090201AFQWYC, @user1   ← 重複會自動被剔除"></textarea>
+2511090201AFQWYC, @user1   ← 重複訂單
+2511090500ABCDE3, @user2   ← 重複社群名稱"></textarea>
 
         <div class="btn-group">
           <button type="button" id="btn-prepare">整理資料</button>
@@ -300,34 +292,36 @@
       </div>
 
       <div class="card">
-        <h2>抽獎設定 & 結果</h2>
-        <div class="row three">
-          <div>
-            <label for="winnerCount">要抽出幾位得獎者：</label>
-            <input type="number" id="winnerCount" min="1" value="3" />
-            <div class="btn-group">
-              <button type="button" id="btn-draw" disabled>開始抽獎 🎲</button>
-            </div>
-            <div class="stat">
-              <span class="pill good" id="pill-valid">有效人數：0</span>
-              <span class="pill bad" id="pill-dup">重複訂單：0</span>
-            </div>
-          </div>
-          <div class="list">
-            <strong>得獎名單：</strong>
-            <ol id="winnerList"></ol>
-            <div class="muted" id="winnerHint">先整理資料後才能抽獎。</div>
-          </div>
+        <h2>有效名單（Tab 分隔，可直接貼回試算表兩欄）</h2>
+        <div class="btn-group">
+          <span class="pill good" id="pill-valid">有效筆數：0</span>
+          <span class="pill bad" id="pill-dup">被剔除筆數：0</span>
         </div>
-        <div class="list" id="dupListWrap" style="margin-top:10px; display:none;">
-          <strong>被剔除的重複訂單（只保留第一筆）：</strong>
+        <label for="validOutput">有效名單：</label>
+        <textarea id="validOutput" readonly placeholder="整理後的有效名單會出現在這裡。
+格式：訂單編號[TAB]社群名稱"></textarea>
+        <div class="btn-group">
+          <button type="button" id="btn-copy-valid">複製有效名單</button>
+        </div>
+        <div class="muted">
+          貼回 Excel / 試算表時，每行會自動分成兩欄（訂單編號 / 社群名稱）。
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>被剔除的重複紀錄</h2>
+        <div class="list" id="dupListWrap" style="display:none;">
           <ul id="dupList"></ul>
+        </div>
+        <div class="muted" id="dupEmptyHint">
+          目前沒有重複紀錄。
         </div>
       </div>
     </section>
   </div>
 
   <script>
+    // --- Tab 切換 ---
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabs = document.querySelectorAll('.tab');
     tabButtons.forEach(btn => {
@@ -339,6 +333,7 @@
       });
     });
 
+    // --- 訂單 JSON 產生器 ---
     const ordersInput = document.getElementById('ordersInput');
     const ordersOutput = document.getElementById('ordersOutput');
     const ordersStat = document.getElementById('ordersStat');
@@ -358,40 +353,40 @@
         }
       }
       const json = JSON.stringify({ orders: unique }, null, 2);
-      ordersOutput.textContent = json;
+      ordersOutput.value = json;
       ordersStat.textContent = `貼上 ${nonEmpty.length} 筆，去重後剩 ${unique.length} 筆。`;
     });
 
     btnClearOrders.addEventListener('click', () => {
       ordersInput.value = '';
-      ordersOutput.textContent = '{}';
+      ordersOutput.value = '{}';
       ordersStat.textContent = '';
     });
 
     btnCopyJson.addEventListener('click', async () => {
-      const text = ordersOutput.textContent.trim();
+      const text = ordersOutput.value.trim();
       if (!text || text === '{}') return;
       try {
         await navigator.clipboard.writeText(text);
         btnCopyJson.textContent = '已複製 ✔';
         setTimeout(() => btnCopyJson.textContent = '複製 JSON', 1200);
       } catch (e) {
-        alert('複製失敗，請手動選取複製。');
+        alert('複製失敗，可能瀏覽器不支援，請手動選取複製。');
       }
     });
 
+    // --- 有效名單整理 ---
     const entryInput = document.getElementById('entryInput');
     const entryStat = document.getElementById('entryStat');
     const btnPrepare = document.getElementById('btn-prepare');
     const btnClearEntry = document.getElementById('btn-clear-entry');
-    const btnDraw = document.getElementById('btn-draw');
-    const winnerCountInput = document.getElementById('winnerCount');
-    const winnerList = document.getElementById('winnerList');
-    const winnerHint = document.getElementById('winnerHint');
+    const validOutput = document.getElementById('validOutput');
+    const btnCopyValid = document.getElementById('btn-copy-valid');
     const pillValid = document.getElementById('pill-valid');
     const pillDup = document.getElementById('pill-dup');
     const dupListWrap = document.getElementById('dupListWrap');
     const dupList = document.getElementById('dupList');
+    const dupEmptyHint = document.getElementById('dupEmptyHint');
 
     let cleanEntries = [];
     let dupEntries = [];
@@ -399,11 +394,14 @@
     btnPrepare.addEventListener('click', () => {
       const lines = entryInput.value.split(/\r?\n/);
       const records = [];
+
       for (const raw of lines) {
         const line = raw.trim();
         if (!line) continue;
+        // 忽略標題列
         if (line.includes('訂單') && line.includes('社群')) continue;
 
+        // 用逗號、Tab 或空白切
         const parts = line.split(/[\t,， ]+/).filter(x => x !== '');
         if (parts.length === 0) continue;
         const orderId = (parts[0] || '').trim();
@@ -412,90 +410,91 @@
         records.push({ orderId, snsName, raw: line });
       }
 
-      const map = new Map();
+      // 兩種去重：
+      // 1) 訂單編號重複
+      // 2) 社群名稱重複（非空白）
+      const orderMap = new Map();
+      const snsMap = new Map();
       cleanEntries = [];
       dupEntries = [];
 
       for (const rec of records) {
-        if (!map.has(rec.orderId)) {
-          map.set(rec.orderId, rec);
-          cleanEntries.push(rec);
+        const orderKey = rec.orderId;
+        const snsKey = (rec.snsName || '').trim();
+
+        let reason = '';
+
+        if (orderMap.has(orderKey)) {
+          reason = 'order';
+        } else if (snsKey && snsMap.has(snsKey)) {
+          reason = 'sns';
+        }
+
+        if (reason) {
+          dupEntries.push({ ...rec, reason });
         } else {
-          dupEntries.push(rec);
+          cleanEntries.push(rec);
+          orderMap.set(orderKey, rec);
+          if (snsKey) snsMap.set(snsKey, rec);
         }
       }
 
+      // 統計文字
       entryStat.textContent =
         `原始共 ${records.length} 筆，去掉空白後 ${records.length} 筆，` +
-        `以訂單編號去重後可抽獎名單 ${cleanEntries.length} 筆。`;
+        `以「訂單編號 + 社群名稱」去重後有效名單 ${cleanEntries.length} 筆。`;
 
-      pillValid.textContent = `有效人數：${cleanEntries.length}`;
-      pillDup.textContent = `重複訂單：${dupEntries.length}`;
+      pillValid.textContent = `有效筆數：${cleanEntries.length}`;
+      pillDup.textContent = `被剔除筆數：${dupEntries.length}`;
 
+      // 產生 Tab 分隔輸出
+      const linesOut = cleanEntries.map(rec => {
+        const sns = rec.snsName || '';
+        return `${rec.orderId}\t${sns}`;
+      });
+      validOutput.value = linesOut.join('\n');
+
+      // 重複紀錄列表
       if (dupEntries.length > 0) {
         dupListWrap.style.display = '';
+        dupEmptyHint.style.display = 'none';
         dupList.innerHTML = '';
         dupEntries.forEach(rec => {
           const li = document.createElement('li');
-          li.textContent = `${rec.orderId}　${rec.snsName || ''}`;
+          const tag =
+            rec.reason === 'sns'
+              ? '（社群名稱重複）'
+              : '（訂單編號重複）';
+          li.textContent = `${rec.orderId}　${rec.snsName || ''} ${tag}`;
           dupList.appendChild(li);
         });
       } else {
         dupListWrap.style.display = 'none';
         dupList.innerHTML = '';
+        dupEmptyHint.style.display = '';
       }
-
-      winnerList.innerHTML = '';
-      winnerHint.textContent = '資料已整理，可以設定人數後按「開始抽獎」。';
-      btnDraw.disabled = cleanEntries.length === 0;
     });
 
     btnClearEntry.addEventListener('click', () => {
       entryInput.value = '';
       entryStat.textContent = '';
-      pillValid.textContent = '有效人數：0';
-      pillDup.textContent = '重複訂單：0';
+      pillValid.textContent = '有效筆數：0';
+      pillDup.textContent = '被剔除筆數：0';
+      validOutput.value = '';
       dupListWrap.style.display = 'none';
       dupList.innerHTML = '';
-      winnerList.innerHTML = '';
-      winnerHint.textContent = '先整理資料後才能抽獎。';
-      btnDraw.disabled = true;
+      dupEmptyHint.style.display = '';
     });
 
-    function shuffle(arr) {
-      const a = arr.slice();
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
-
-    btnDraw.addEventListener('click', () => {
-      const n = parseInt(winnerCountInput.value, 10) || 0;
-      if (!cleanEntries.length) {
-        alert('請先整理資料。');
-        return;
-      }
-      if (n <= 0) {
-        alert('請輸入要抽出的人數（至少 1 人）。');
-        return;
-      }
-      const count = Math.min(n, cleanEntries.length);
-      const shuffled = shuffle(cleanEntries);
-      const winners = shuffled.slice(0, count);
-
-      winnerList.innerHTML = '';
-      winners.forEach((rec, idx) => {
-        const li = document.createElement('li');
-        li.textContent = `${rec.orderId}　${rec.snsName || ''}`;
-        winnerList.appendChild(li);
-      });
-
-      if (count < n) {
-        winnerHint.textContent = `名單只有 ${cleanEntries.length} 筆，實際抽出 ${count} 位。`;
-      } else {
-        winnerHint.textContent = `已隨機抽出 ${count} 位得獎者。`;
+    btnCopyValid.addEventListener('click', async () => {
+      const text = validOutput.value.trim();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        btnCopyValid.textContent = '已複製 ✔';
+        setTimeout(() => btnCopyValid.textContent = '複製有效名單', 1200);
+      } catch (e) {
+        alert('複製失敗，請手動選取內容複製。');
       }
     });
   </script>
