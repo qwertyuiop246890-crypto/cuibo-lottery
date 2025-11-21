@@ -15,7 +15,7 @@ body {
   /* ===== 背景圖片覆蓋 ===== */
   background-image:
     linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-    url("CuiBo.jpg");   /* ← 把檔名換掉即可 */
+    url("CuiBo.png");   /* ← 把檔名換掉即可 */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
