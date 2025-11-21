@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>抽獎活動報名</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>抽獎活動報名</h1>
+    <p class="desc">請輸入您的訂單編號與社群名稱。</p>
+
+    <form id="lotteryForm">
+      <label>
+        訂單編號：
+        <input type="text" name="orderId" id="orderIdInput" required />
+        <span id="orderStatus"></span>
+      </label>
+
+      <label>
+        社群名稱（IG / LINE / Threads 等）：
+        <input type="text" name="snsName" id="snsNameInput" required />
+      </label>
+
+      <button type="submit">送出</button>
+      <p id="submitStatus"></p>
+    </form>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "【在這裡貼上 Apps Script Web App URL】";
+    const ORDER_LIST_URL = "./orderIds.json";
+
+    let validOrders = new Set();
+    let ordersLoaded = false;
+
+    const orderInput = document.getElementById('orderIdInput');
+    const snsInput = document.getElementById('snsNameInput');
+    const orderStatus = document.getElementById('orderStatus');
+    const form = document.getElementById('lotteryForm');
+    const submitStatus = document.getElementById('submitStatus');
+
+    async function loadOrders() {
+      orderStatus.textContent = "訂單清單載入中…";
+      try {
+        const res = await fetch(ORDER_LIST_URL);
+        const data = await res.json();
+        if (Array.isArray(data.orders)) {
+          validOrders = new Set(data.orders.map(String));
+          ordersLoaded = true;
+          orderStatus.textContent = "";
+        } else {
+          orderStatus.textContent = "訂單清單載入失敗。";
+        }
+      } catch {
+        orderStatus.textContent = "訂單清單載入失敗。";
+      }
+    }
+
+    loadOrders();
+
+    orderInput.addEventListener("input", () => {
+      const value = orderInput.value.trim();
+      if (!ordersLoaded || value === "") {
+        orderStatus.textContent = "";
+        return;
+      }
+      if (validOrders.has(value)) {
+        orderStatus.textContent = "✅ 查到訂單，可以參加本次抽獎";
+      } else {
+        orderStatus.textContent = "⚠️ 找不到這張訂單";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      submitStatus.textContent = "";
+
+      const orderId = orderInput.value.trim();
+      const snsName = snsInput.value.trim();
+
+      if (!ordersLoaded) {
+        submitStatus.textContent = "訂單清單尚未載入完成。";
+        return;
+      }
+
+      if (!validOrders.has(orderId)) {
+        submitStatus.textContent = "⚠️ 找不到這張訂單。";
+        return;
+      }
+
+      submitStatus.textContent = "送出中…";
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ orderId, snsName })
+        });
+
+        submitStatus.textContent = "✅ 已送出報名！";
+        form.reset();
+        orderStatus.textContent = "";
+      } catch {
+        submitStatus.textContent = "送出失敗，請稍後再試。";
+      }
+    });
+  </script>
+</body>
+</html>
