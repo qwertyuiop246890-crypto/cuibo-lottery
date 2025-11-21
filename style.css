@@ -11,9 +11,24 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: linear-gradient(180deg, var(--main) 0%, #eef4f8 40%, #ffffff 100%);
+
+  /* ===== 背景圖片覆蓋 ===== */
+  background-image:
+    linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
+    url("your-background.jpg");   /* ← 把檔名換掉即可 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  /* 讓圖片在手機與電腦上自適應，不會變形 */
+  min-height: 100vh;
+
+  /* 表單與 排版 */
   padding: 24px 12px 40px;
+  display: flex;
+  justify-content: center;
 }
+
 
 .container {
   background: #ffffff;
