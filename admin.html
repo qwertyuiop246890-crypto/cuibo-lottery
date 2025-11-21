@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>抽獎管理工具</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --main: #afc9d9;
+      --dark: #2b3e50;
+      --light: #f7fafc;
+      --border: #d0dbe3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, var(--main) 0%, #eef4f8 40%, #ffffff 100%);
+      padding: 24px 12px 40px;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      padding: 20px 18px 28px;
+    }
+
+    @media (min-width: 768px) {
+      .page {
+        padding: 24px 24px 32px;
+      }
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.5rem;
+      color: var(--dark);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #5a6a7a;
+      margin-bottom: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: #f5f8fb;
+      color: #445569;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: var(--dark);
+      color: #fff;
+      border-color: var(--dark);
+    }
+
+    .tab-btn span.icon {
+      font-size: 1rem;
+    }
+
+    .tab {
+      display: none;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 14px 16px;
+      background: var(--light);
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 1.1rem;
+      color: var(--dark);
+    }
+
+    .card p.desc {
+      margin: 0 0 10px;
+      font-size: 0.85rem;
+      color: #566677;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #344255;
+    }
+
+    textarea, input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.85rem;
+      background: #ffffff;
+    }
+
+    textarea {
+      min-height: 140px;
+    }
+
+    .row {
+      display: grid;
+      gap: 12px;
+    }
+
+    @media (min-width: 768px) {
+      .row.two {
+        grid-template-columns: 1.1fr 1fr;
+      }
+      .row.three {
+        grid-template-columns: 1.1fr 0.9fr;
+      }
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: var(--dark);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button.secondary {
+      background: #f5f8fb;
+      color: #324256;
+      border: 1px solid var(--border);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      margin-bottom: 6px;
+    }
+
+    .stat {
+      font-size: 0.85rem;
+      color: #445569;
+      margin-top: 4px;
+    }
+
+    pre {
+      background: #111827;
+      color: #e5e7eb;
+      padding: 10px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      margin: 6px 0 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: rgba(175,201,217,0.2);
+      color: #324256;
+      margin-right: 4px;
+      margin-bottom: 4px;
+    }
+
+    .pill.bad {
+      background: rgba(239,68,68,0.12);
+      color: #b91c1c;
+    }
+
+    .pill.good {
+      background: rgba(16,185,129,0.16);
+      color: #047857;
+    }
+
+    .list {
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    .list ul, .list ol {
+      margin: 4px 0 0 18px;
+      padding: 0;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>抽獎管理工具</h1>
+    <div class="subtitle">
+      這一頁只有自己用：上面做 <strong>訂單清單 → orderIds.json</strong>，下面做 <strong>報名整理 + 抽獎</strong>。
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="json">
+        <span class="icon">🧾</span><span>訂單 JSON 產生器</span>
+      </button>
+      <button class="tab-btn" data-tab="lottery">
+        <span class="icon">🎲</span><span>報名整理 & 抽獎</span>
+      </button>
+    </div>
+
+    <section class="tab active" id="tab-json">
+      <div class="card">
+        <h2>訂單清單 ➜ orderIds.json</h2>
+        <p class="desc">
+          從試算表或 Excel 複製所有「訂單編號」貼到左邊，系統會：
+          <br>去掉空白行 ➜ 自動去重 ➜ 產生可以直接貼進 <code>orderIds.json</code> 的內容。
+        </p>
+        <div class="row two">
+          <div>
+            <label for="ordersInput">貼上訂單編號（每行一筆）：</label>
+            <textarea id="ordersInput" placeholder="例如：
+2511090201AFQWYC
+2511090411V7UZ3S
+2511091021ST8T3P"></textarea>
+            <div class="btn-group">
+              <button type="button" id="btn-gen-json">產生 JSON</button>
+              <button type="button" class="secondary" id="btn-clear-orders">清除</button>
+            </div>
+            <div class="stat" id="ordersStat"></div>
+          </div>
+          <div>
+            <label>產生結果（orderIds.json 內容）：</label>
+            <pre id="ordersOutput">{}</pre>
+            <div class="btn-group">
+              <button type="button" class="secondary" id="btn-copy-json">複製 JSON</button>
+            </div>
+            <div class="muted">
+              貼到 GitHub 的 <code>orderIds.json</code> 裡，記得 Commit。
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-lottery">
+      <div class="card">
+        <h2>報名資料整理</h2>
+        <p class="desc">
+          建議流程：在 Google 試算表的「抽獎報名」頁，先篩選出 <strong>狀態 = 有效</strong>，
+          再複製「訂單編號 + 社群名稱」兩欄貼到下面，系統會自動：
+          <br>➜ 去掉空白列　➜ 以訂單編號去重（只保留第一筆）　➜ 幫你統計重複訂單。
+        </p>
+        <label for="entryInput">貼上資料（每行：訂單編號＋社群名，可以用逗號、空白或 Tab 分隔）：</label>
+        <textarea id="entryInput" placeholder="例如：
+2511090201AFQWYC, @user1
+2511090411V7UZ3S, @user2
+2511090201AFQWYC, @user1   ← 重複會自動被剔除"></textarea>
+
+        <div class="btn-group">
+          <button type="button" id="btn-prepare">整理資料</button>
+          <button type="button" class="secondary" id="btn-clear-entry">清除</button>
+        </div>
+        <div class="stat" id="entryStat"></div>
+      </div>
+
+      <div class="card">
+        <h2>抽獎設定 & 結果</h2>
+        <div class="row three">
+          <div>
+            <label for="winnerCount">要抽出幾位得獎者：</label>
+            <input type="number" id="winnerCount" min="1" value="3" />
+            <div class="btn-group">
+              <button type="button" id="btn-draw" disabled>開始抽獎 🎲</button>
+            </div>
+            <div class="stat">
+              <span class="pill good" id="pill-valid">有效人數：0</span>
+              <span class="pill bad" id="pill-dup">重複訂單：0</span>
+            </div>
+          </div>
+          <div class="list">
+            <strong>得獎名單：</strong>
+            <ol id="winnerList"></ol>
+            <div class="muted" id="winnerHint">先整理資料後才能抽獎。</div>
+          </div>
+        </div>
+        <div class="list" id="dupListWrap" style="margin-top:10px; display:none;">
+          <strong>被剔除的重複訂單（只保留第一筆）：</strong>
+          <ul id="dupList"></ul>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabs = document.querySelectorAll('.tab');
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabs.forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    const ordersInput = document.getElementById('ordersInput');
+    const ordersOutput = document.getElementById('ordersOutput');
+    const ordersStat = document.getElementById('ordersStat');
+    const btnGenJson = document.getElementById('btn-gen-json');
+    const btnClearOrders = document.getElementById('btn-clear-orders');
+    const btnCopyJson = document.getElementById('btn-copy-json');
+
+    btnGenJson.addEventListener('click', () => {
+      const rawLines = ordersInput.value.split(/\r?\n/).map(l => l.trim());
+      const nonEmpty = rawLines.filter(l => l !== '');
+      const seen = new Set();
+      const unique = [];
+      for (const id of nonEmpty) {
+        if (!seen.has(id)) {
+          seen.add(id);
+          unique.push(id);
+        }
+      }
+      const json = JSON.stringify({ orders: unique }, null, 2);
+      ordersOutput.textContent = json;
+      ordersStat.textContent = `貼上 ${nonEmpty.length} 筆，去重後剩 ${unique.length} 筆。`;
+    });
+
+    btnClearOrders.addEventListener('click', () => {
+      ordersInput.value = '';
+      ordersOutput.textContent = '{}';
+      ordersStat.textContent = '';
+    });
+
+    btnCopyJson.addEventListener('click', async () => {
+      const text = ordersOutput.textContent.trim();
+      if (!text || text === '{}') return;
+      try {
+        await navigator.clipboard.writeText(text);
+        btnCopyJson.textContent = '已複製 ✔';
+        setTimeout(() => btnCopyJson.textContent = '複製 JSON', 1200);
+      } catch (e) {
+        alert('複製失敗，請手動選取複製。');
+      }
+    });
+
+    const entryInput = document.getElementById('entryInput');
+    const entryStat = document.getElementById('entryStat');
+    const btnPrepare = document.getElementById('btn-prepare');
+    const btnClearEntry = document.getElementById('btn-clear-entry');
+    const btnDraw = document.getElementById('btn-draw');
+    const winnerCountInput = document.getElementById('winnerCount');
+    const winnerList = document.getElementById('winnerList');
+    const winnerHint = document.getElementById('winnerHint');
+    const pillValid = document.getElementById('pill-valid');
+    const pillDup = document.getElementById('pill-dup');
+    const dupListWrap = document.getElementById('dupListWrap');
+    const dupList = document.getElementById('dupList');
+
+    let cleanEntries = [];
+    let dupEntries = [];
+
+    btnPrepare.addEventListener('click', () => {
+      const lines = entryInput.value.split(/\r?\n/);
+      const records = [];
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line) continue;
+        if (line.includes('訂單') && line.includes('社群')) continue;
+
+        const parts = line.split(/[\t,， ]+/).filter(x => x !== '');
+        if (parts.length === 0) continue;
+        const orderId = (parts[0] || '').trim();
+        const snsName = (parts[1] || '').trim();
+        if (!orderId) continue;
+        records.push({ orderId, snsName, raw: line });
+      }
+
+      const map = new Map();
+      cleanEntries = [];
+      dupEntries = [];
+
+      for (const rec of records) {
+        if (!map.has(rec.orderId)) {
+          map.set(rec.orderId, rec);
+          cleanEntries.push(rec);
+        } else {
+          dupEntries.push(rec);
+        }
+      }
+
+      entryStat.textContent =
+        `原始共 ${records.length} 筆，去掉空白後 ${records.length} 筆，` +
+        `以訂單編號去重後可抽獎名單 ${cleanEntries.length} 筆。`;
+
+      pillValid.textContent = `有效人數：${cleanEntries.length}`;
+      pillDup.textContent = `重複訂單：${dupEntries.length}`;
+
+      if (dupEntries.length > 0) {
+        dupListWrap.style.display = '';
+        dupList.innerHTML = '';
+        dupEntries.forEach(rec => {
+          const li = document.createElement('li');
+          li.textContent = `${rec.orderId}　${rec.snsName || ''}`;
+          dupList.appendChild(li);
+        });
+      } else {
+        dupListWrap.style.display = 'none';
+        dupList.innerHTML = '';
+      }
+
+      winnerList.innerHTML = '';
+      winnerHint.textContent = '資料已整理，可以設定人數後按「開始抽獎」。';
+      btnDraw.disabled = cleanEntries.length === 0;
+    });
+
+    btnClearEntry.addEventListener('click', () => {
+      entryInput.value = '';
+      entryStat.textContent = '';
+      pillValid.textContent = '有效人數：0';
+      pillDup.textContent = '重複訂單：0';
+      dupListWrap.style.display = 'none';
+      dupList.innerHTML = '';
+      winnerList.innerHTML = '';
+      winnerHint.textContent = '先整理資料後才能抽獎。';
+      btnDraw.disabled = true;
+    });
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    btnDraw.addEventListener('click', () => {
+      const n = parseInt(winnerCountInput.value, 10) || 0;
+      if (!cleanEntries.length) {
+        alert('請先整理資料。');
+        return;
+      }
+      if (n <= 0) {
+        alert('請輸入要抽出的人數（至少 1 人）。');
+        return;
+      }
+      const count = Math.min(n, cleanEntries.length);
+      const shuffled = shuffle(cleanEntries);
+      const winners = shuffled.slice(0, count);
+
+      winnerList.innerHTML = '';
+      winners.forEach((rec, idx) => {
+        const li = document.createElement('li');
+        li.textContent = `${rec.orderId}　${rec.snsName || ''}`;
+        winnerList.appendChild(li);
+      });
+
+      if (count < n) {
+        winnerHint.textContent = `名單只有 ${cleanEntries.length} 筆，實際抽出 ${count} 位。`;
+      } else {
+        winnerHint.textContent = `已隨機抽出 ${count} 位得獎者。`;
+      }
+    });
+  </script>
+</body>
+</html>
