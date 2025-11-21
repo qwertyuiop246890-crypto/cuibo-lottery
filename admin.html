@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>訂單編號輸出&有效名單產生器</title>
+  <title>訂單編號輸出＆有效名單產生器</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -214,28 +214,29 @@
 </head>
 <body>
   <div class="page">
-    <h1>抽獎管理工具</h1>
+    <h1>訂單編號輸出＆有效名單產生器</h1>
     <div class="subtitle">
-      上面：<strong>訂單清單 ➜ orderIds.json</strong>，<br>
+      上面：<strong>訂單清單 ➜ orderIds.json ＋ 純訂單清單</strong>；<br>
       下面：<strong>報名資料 ➜ 有效名單（Tab 分隔，可貼回試算表）</strong>。
     </div>
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="json">
-        <span class="icon">🧾</span><span>訂單 JSON 產生器</span>
+        <span class="icon">📄</span><span>訂單JSON產生器</span>
       </button>
       <button class="tab-btn" data-tab="clean">
         <span class="icon">📋</span><span>有效名單整理</span>
       </button>
     </div>
 
-    <!-- Tab 1: 訂單 JSON 產生器 -->
+    <!-- Tab 1: 訂單 JSON & 純訂單清單 -->
     <section class="tab active" id="tab-json">
       <div class="card">
-        <h2>訂單清單 ➜ orderIds.json</h2>
+        <h2>訂單清單 ➜ orderIds.json ＋ 純訂單清單</h2>
         <p class="desc">
           從試算表或 Excel 複製所有「訂單編號」貼到左邊，系統會：
-          <br>去掉空白行 ➜ 自動去重 ➜ 產生可以直接貼進 <code>orderIds.json</code> 的內容。
+          <br>去掉空白行 ➜ 自動去重 ➜ 同時產生
+          <strong>orderIds.json 內容</strong>＋<strong>純訂單清單（每行一筆，可直接貼回 Excel）</strong>。
         </p>
         <div class="row two">
           <div>
@@ -245,26 +246,32 @@
 2511090411V7UZ3S
 2511091021ST8T3P"></textarea>
             <div class="btn-group">
-              <button type="button" id="btn-gen-json">產生 JSON</button>
+              <button type="button" id="btn-gen-json">產生結果</button>
               <button type="button" class="secondary" id="btn-clear-orders">清除</button>
             </div>
             <div class="stat" id="ordersStat"></div>
           </div>
           <div>
-            <label>產生結果（orderIds.json 內容）：</label>
-            <textarea id="ordersOutput" readonly>{}</textarea>
+            <label for="ordersOutputJson">產生結果（orderIds.json 內容）：</label>
+            <textarea id="ordersOutputJson" readonly>{}</textarea>
+
+            <label for="ordersOutputPlain" style="margin-top:10px;">純訂單清單（每行一筆，可直接貼回 Excel）：</label>
+            <textarea id="ordersOutputPlain" readonly placeholder="去重後的訂單編號會出現在這裡，每行一筆。"></textarea>
+
             <div class="btn-group">
               <button type="button" class="secondary" id="btn-copy-json">複製 JSON</button>
+              <button type="button" class="secondary" id="btn-copy-plain">複製訂單清單</button>
             </div>
             <div class="muted">
-              貼到 GitHub 的 <code>orderIds.json</code> 裡，記得 Commit。
+              JSON 貼到 GitHub 的 <code>orderIds.json</code>；<br>
+              「純訂單清單」可以直接貼回 Excel，一列一筆，不會有合併儲存格問題。
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Tab 2: 有效名單整理 -->
+    <!-- Tab 2: 有效名單整理（保留之前的邏輯） -->
     <section class="tab" id="tab-clean">
       <div class="card">
         <h2>報名資料 ➜ 有效名單（Tab 分隔）</h2>
@@ -295,7 +302,7 @@
         <h2>有效名單（Tab 分隔，可直接貼回試算表兩欄）</h2>
         <div class="btn-group">
           <span class="pill good" id="pill-valid">有效筆數：0</span>
-          <span class="pill bad" id="pill-dup">被剔除筆數：0</span>
+          <span class="pill.bad" id="pill-dup">被剔除筆數：0</span>
         </div>
         <label for="validOutput">有效名單：</label>
         <textarea id="validOutput" readonly placeholder="整理後的有效名單會出現在這裡。
@@ -333,13 +340,15 @@
       });
     });
 
-    // --- 訂單 JSON 產生器 ---
+    // --- 訂單 JSON & 純清單 ---
     const ordersInput = document.getElementById('ordersInput');
-    const ordersOutput = document.getElementById('ordersOutput');
+    const ordersOutputJson = document.getElementById('ordersOutputJson');
+    const ordersOutputPlain = document.getElementById('ordersOutputPlain');
     const ordersStat = document.getElementById('ordersStat');
     const btnGenJson = document.getElementById('btn-gen-json');
     const btnClearOrders = document.getElementById('btn-clear-orders');
     const btnCopyJson = document.getElementById('btn-copy-json');
+    const btnCopyPlain = document.getElementById('btn-copy-plain');
 
     btnGenJson.addEventListener('click', () => {
       const rawLines = ordersInput.value.split(/\r?\n/).map(l => l.trim());
@@ -353,29 +362,43 @@
         }
       }
       const json = JSON.stringify({ orders: unique }, null, 2);
-      ordersOutput.value = json;
+      ordersOutputJson.value = json;
+      ordersOutputPlain.value = unique.join('\n');
       ordersStat.textContent = `貼上 ${nonEmpty.length} 筆，去重後剩 ${unique.length} 筆。`;
     });
 
     btnClearOrders.addEventListener('click', () => {
       ordersInput.value = '';
-      ordersOutput.value = '{}';
+      ordersOutputJson.value = '{}';
+      ordersOutputPlain.value = '';
       ordersStat.textContent = '';
     });
 
     btnCopyJson.addEventListener('click', async () => {
-      const text = ordersOutput.value.trim();
+      const text = ordersOutputJson.value.trim();
       if (!text || text === '{}') return;
       try {
         await navigator.clipboard.writeText(text);
         btnCopyJson.textContent = '已複製 ✔';
         setTimeout(() => btnCopyJson.textContent = '複製 JSON', 1200);
       } catch (e) {
-        alert('複製失敗，可能瀏覽器不支援，請手動選取複製。');
+        alert('複製失敗，請手動選取 JSON 後複製。');
       }
     });
 
-    // --- 有效名單整理 ---
+    btnCopyPlain.addEventListener('click', async () => {
+      const text = ordersOutputPlain.value.trim();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        btnCopyPlain.textContent = '已複製 ✔';
+        setTimeout(() => btnCopyPlain.textContent = '複製訂單清單', 1200);
+      } catch (e) {
+        alert('複製失敗，請手動選取訂單清單後複製。');
+      }
+    });
+
+    // --- 有效名單整理（跟之前邏輯相同） ---
     const entryInput = document.getElementById('entryInput');
     const entryStat = document.getElementById('entryStat');
     const btnPrepare = document.getElementById('btn-prepare');
@@ -398,10 +421,8 @@
       for (const raw of lines) {
         const line = raw.trim();
         if (!line) continue;
-        // 忽略標題列
         if (line.includes('訂單') && line.includes('社群')) continue;
 
-        // 用逗號、Tab 或空白切
         const parts = line.split(/[\t,， ]+/).filter(x => x !== '');
         if (parts.length === 0) continue;
         const orderId = (parts[0] || '').trim();
@@ -410,9 +431,6 @@
         records.push({ orderId, snsName, raw: line });
       }
 
-      // 兩種去重：
-      // 1) 訂單編號重複
-      // 2) 社群名稱重複（非空白）
       const orderMap = new Map();
       const snsMap = new Map();
       cleanEntries = [];
@@ -439,7 +457,6 @@
         }
       }
 
-      // 統計文字
       entryStat.textContent =
         `原始共 ${records.length} 筆，去掉空白後 ${records.length} 筆，` +
         `以「訂單編號 + 社群名稱」去重後有效名單 ${cleanEntries.length} 筆。`;
@@ -447,14 +464,12 @@
       pillValid.textContent = `有效筆數：${cleanEntries.length}`;
       pillDup.textContent = `被剔除筆數：${dupEntries.length}`;
 
-      // 產生 Tab 分隔輸出
       const linesOut = cleanEntries.map(rec => {
         const sns = rec.snsName || '';
         return `${rec.orderId}\t${sns}`;
       });
       validOutput.value = linesOut.join('\n');
 
-      // 重複紀錄列表
       if (dupEntries.length > 0) {
         dupListWrap.style.display = '';
         dupEmptyHint.style.display = 'none';
